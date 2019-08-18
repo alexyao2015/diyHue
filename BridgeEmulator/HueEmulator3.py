@@ -699,7 +699,7 @@ def scan_for_lights(): #scan for ESP8266 lights and strips
                         }
         except Exception as e:
             logging.info("ip %s is unknown device: %s", ip, e)
-            raise
+            #raise
     scanDeconz()
     scanTradfri()
     saveConfig()
