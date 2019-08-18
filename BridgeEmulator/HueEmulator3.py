@@ -1388,10 +1388,10 @@ class S(BaseHTTPRequestHandler):
                 if len(url_pices) == 3: #print entire config
                     #if Sleep as Android is requesting the config then send it without the scenes
                     if url_pices[2] == "4fada22cfb7cfc0a0b102ebd73cb1fad": #Sleep as Android username
-                        self._set_end_headers(bytes(json.dumps({"lights": bridge_config["lights"], "groups": bridge_config["groups"], "config": bridge_config["config"], "scenes": { }, "schedules": bridge_config["schedules"], "rules": bridge_config["rules"], "sensors": bridge_config["sensors"], "resourcelinks": bridge_config["resourcelinks"]},separators=(',', ':')),ensure_ascii=False), "utf8"))
+                        self._set_end_headers(bytes(json.dumps({"lights": bridge_config["lights"], "groups": bridge_config["groups"], "config": bridge_config["config"], "scenes": { }, "schedules": bridge_config["schedules"], "rules": bridge_config["rules"], "sensors": bridge_config["sensors"], "resourcelinks": bridge_config["resourcelinks"]},separators=(',', ':'),ensure_ascii=False), "utf8"))
                     #if not Sleep as Android is requesting send it as usual
                     else:
-                        self._set_end_headers(bytes(json.dumps({"lights": bridge_config["lights"], "groups": bridge_config["groups"], "config": bridge_config["config"], "scenes": bridge_config["scenes"], "schedules": bridge_config["schedules"], "rules": bridge_config["rules"], "sensors": bridge_config["sensors"], "resourcelinks": bridge_config["resourcelinks"]},separators=(',', ':')),ensure_ascii=False), "utf8"))
+                        self._set_end_headers(bytes(json.dumps({"lights": bridge_config["lights"], "groups": bridge_config["groups"], "config": bridge_config["config"], "scenes": bridge_config["scenes"], "schedules": bridge_config["schedules"], "rules": bridge_config["rules"], "sensors": bridge_config["sensors"], "resourcelinks": bridge_config["resourcelinks"]},separators=(',', ':'),ensure_ascii=False), "utf8"))
                 elif len(url_pices) == 4: #print specified object config
                     self._set_end_headers(bytes(json.dumps(bridge_config[url_pices[3]],separators=(',', ':'),ensure_ascii=False), "utf8"))
                 elif (len(url_pices) == 5 or (len(url_pices) == 6 and url_pices[5] == 'state')):
