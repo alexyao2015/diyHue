@@ -114,8 +114,8 @@ def set_light(address, light, data):
         command(address["ip"], key, value)
 
 def get_light_state(address, light):
-    #logging.info("name is: " + light["name"])
-    #if light["name"].find("desklamp") > 0: logging.info("is desk lamp")
+    logging.debug("name is: " + light["name"])
+    if light["name"].find("desklamp") > 0: logging.info("is desk lamp")
     state = {}
     tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     tcp_socket.settimeout(5)
