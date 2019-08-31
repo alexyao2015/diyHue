@@ -31,15 +31,15 @@ after_success:
 - >
   if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
     docker login -u="$DOCKER_USER" -p="$DOCKER_PASS"
-    docker tag yaoa/diyhue:$ARCH yaoa/diyhue:$ARCH-$TRAVIS_COMMIT
-    docker push yaoa/diyhue:$ARCH
-    docker push yaoa/diyhue:$ARCH-$TRAVIS_COMMIT
+    docker tag yaoa/diyhue:$ARCH yaoa/diyhue:DEBUG-$ARCH-$TRAVIS_COMMIT
+    docker push yaoa/diyhue:DEBUG-$ARCH
+    docker push yaoa/diyhue:DEBUG-$ARCH-$TRAVIS_COMMIT
     
     # Download manifest-tool
     wget https://github.com/estesp/manifest-tool/releases/download/v0.7.0/manifest-tool-linux-amd64
     mv manifest-tool-linux-amd64 manifest-tool
     chmod +x manifest-tool
     # Push manifest-list
-    ./manifest-tool push from-args --platforms linux/amd64,linux/arm --template "yaoa/diyhue:ARCH-${TRAVIS_COMMIT}" --target "yaoa/diyhue:$TRAVIS_COMMIT"
-    ./manifest-tool push from-args --platforms linux/amd64,linux/arm --template "yaoa/diyhue:ARCH-${TRAVIS_COMMIT}" --target "yaoa/diyhue:latest"
+    ./manifest-tool push from-args --platforms linux/amd64,linux/arm --template "yaoa/diyhue:DEBUG-ARCH-${TRAVIS_COMMIT}" --target "yaoa/diyhue:DEBUG-$TRAVIS_COMMIT"
+    ./manifest-tool push from-args --platforms linux/amd64,linux/arm --template "yaoa/diyhue:DEBUG-ARCH-${TRAVIS_COMMIT}" --target "yaoa/diyhue:DEBUG-latest"
   fi
