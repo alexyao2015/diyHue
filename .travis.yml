@@ -29,7 +29,7 @@ script:
 after_success:
 # Tag and push built images
 - >
-  if [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+  if [ "$TRAVIS_BRANCH" == "debug" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
     docker login -u="$DOCKER_USER" -p="$DOCKER_PASS"
     docker tag yaoa/diyhue:$ARCH yaoa/diyhue:DEBUG-$ARCH-$TRAVIS_COMMIT
     docker push yaoa/diyhue:DEBUG-$ARCH
