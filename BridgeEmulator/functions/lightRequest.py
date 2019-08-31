@@ -286,11 +286,12 @@ def syncWithLights(lights, addresses, users, groups): #update Hue Bridge lights 
                 lights[light]["state"]["reachable"] = False
                 lights[light]["state"]["on"] = False
                 logging.exception("light " + light + " is unreachable")
-        sleep(10) #wait at last 10 seconds before next sync
+        sleep(5) #wait at last 10 seconds before next sync
         i = 0
-        while i < 300: #sync with lights every 300 seconds or instant if one user is connected
+        while i < 10: #sync with lights every 300 seconds or instant if one user is connected
             for user in users.keys():
                 if users[user]["last use date"] == datetime.now().strftime("%Y-%m-%dT%H:%M:%S"):
-                    i = 300
+                    i = 10
                     break
+            i += 1
             sleep(1)
