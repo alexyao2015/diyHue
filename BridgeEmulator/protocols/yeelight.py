@@ -97,7 +97,7 @@ def set_light(address, light, data):
             #if ip[:-3] == "201" or ip[:-3] == "202":
             if light["name"].find("desklamp") > 0:
                 if value > 369: value = 369
-            payload["set_ct_abx"] = [int(1000000 / value), "smooth", transitiontime]
+            payload["set_ct_abx"] = [int(994500 / value), "smooth", transitiontime]
         elif key == "hue":
             payload["set_hsv"] = [int(value / 182), int(light["state"]["sat"] / 2.54), "smooth", transitiontime]
         elif key == "sat":
