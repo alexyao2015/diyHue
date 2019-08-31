@@ -113,8 +113,6 @@ def set_light(address, light, data):
     # check if hue wants to change brightness
     for key, value in payload.items():
         command(address["ip"], key, value)
-    sleep(1.5) # prevent overloading api with requests 60 requests/min max
-    logging.debug(data)
 
 def get_light_state(address, light):
     logging.debug("name is: " + light["name"])
