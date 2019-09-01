@@ -226,7 +226,6 @@ def syncWithLights(lights, addresses, users, groups): #update Hue Bridge lights 
                             lights[light]["state"].update(light_state)
                         except Exception as e:
                             lights[light]["state"]["reachable"] = False
-                            logging.debug(lights[light])
                             logging.warning("light not reachable: %s", e)
 
                 if addresses[light]["protocol"] == "native":
