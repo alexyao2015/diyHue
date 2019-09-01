@@ -221,12 +221,8 @@ def syncWithLights(lights, addresses, users, groups): #update Hue Bridge lights 
                 protocol_name = addresses[light]["protocol"]
                 for protocol in protocols:
                     if "protocols." + protocol_name == protocol.__name__:
-                        try:
-                            light_state = protocol.get_light_state(addresses[light], lights[light])
-                            lights[light]["state"].update(light_state)
-                        except Exception as e:
-                            lights[light]["state"]["reachable"] = False
-                            logging.warning(lights[light]["name"] + " not reachable: %s", e)
+                        light_state = protocol.get_light_state(addresses[light], lights[light])
+                        lights[light]["state"].update(light_state)
 
                 if addresses[light]["protocol"] == "native":
                     light_data = json.loads(sendRequest("http://" + addresses[light]["ip"] + "/get?light=" + str(addresses[light]["light_nr"]), "GET", "{}"))
@@ -280,7 +276,6 @@ def syncWithLights(lights, addresses, users, groups): #update Hue Bridge lights 
                          lights[light]["state"]["on"] = True
                     lights[light]["state"]["bri"] = str(round(float(light_data)/100*255))
 
-                logging.debug(addresses[light])
                 logging.debug(lights[light]["name"] + " has been set to reachable 2")
                 lights[light]["state"]["reachable"] = True
                 updateGroupStats(light, lights, groups)
