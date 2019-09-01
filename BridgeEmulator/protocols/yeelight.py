@@ -135,9 +135,9 @@ def get_light_state(address, light):
         msg_ct=json.dumps({"id": 1, "method": "get_prop", "params":["ct"]}) + "\r\n"
         tcp_socket.send(msg_ct.encode())
         data = tcp_socket.recv(16 * 1024)
-        tempval = int(1000000 / int(json.loads(data[:-2].decode("utf8"))["result"][0]))
+        tempval = int(994500 / int(json.loads(data[:-2].decode("utf8"))["result"][0]))
         if tempval > 369: tempval = 369
-        state["ct"] = tempval # int(1000000 / int(json.loads(data[:-2].decode("utf8"))["result"][0]))
+        state["ct"] = tempval # int(994500 / int(json.loads(data[:-2].decode("utf8"))["result"][0]))
         state["colormode"] = "ct"
     else:
         msg_mode=json.dumps({"id": 1, "method": "get_prop", "params":["color_mode"]}) + "\r\n"
@@ -164,7 +164,7 @@ def get_light_state(address, light):
             msg_ct=json.dumps({"id": 1, "method": "get_prop", "params":["ct"]}) + "\r\n"
             tcp_socket.send(msg_ct.encode())
             data = tcp_socket.recv(16 * 1024)
-            state["ct"] =  int(1000000 / int(json.loads(data[:-2].decode("utf8"))["result"][0]))
+            state["ct"] =  int(994500 / int(json.loads(data[:-2].decode("utf8"))["result"][0]))
             state["colormode"] = "ct"
         elif json.loads(data[:-2].decode("utf8"))["result"][0] == "3": #hs mode
             msg_hsv=json.dumps({"id": 1, "method": "get_prop", "params":["hue","sat"]}) + "\r\n"
