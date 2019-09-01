@@ -210,7 +210,6 @@ def sendLightRequest(light, data, lights, addresses):
             logging.info("request error")
         else:
             lights[light]["state"]["reachable"] = True
-            logging.debug(lights[light]["name"] + " has been set to reachable 1")
             logging.info("LightRequest: " + url)
 
 
@@ -281,6 +280,7 @@ def syncWithLights(lights, addresses, users, groups): #update Hue Bridge lights 
                          lights[light]["state"]["on"] = True
                     lights[light]["state"]["bri"] = str(round(float(light_data)/100*255))
 
+                logging.debug(addresses[light])
                 logging.debug(lights[light]["name"] + " has been set to reachable 2")
                 lights[light]["state"]["reachable"] = True
                 updateGroupStats(light, lights, groups)
