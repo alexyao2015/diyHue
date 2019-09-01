@@ -291,7 +291,7 @@ def syncWithLights(lights, addresses, users, groups): #update Hue Bridge lights 
         while i < 300: #sync with lights every 300 seconds or instant if one user is connected
             for user in users.keys():
                 if users[user]["last use date"] == datetime.now().strftime("%Y-%m-%dT%H:%M:%S"):
-                    i = 10
+                    i = 300
                     break
             i += 1
             sleep(1)
