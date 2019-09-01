@@ -97,7 +97,7 @@ def set_light(address, light, data):
             #if ip[:-3] == "201" or ip[:-3] == "202":
             if light["name"].find("desklamp") > 0:
                 if value > 369: value = 369
-            payload["set_ct_abx"] = [int(994500 / value), "smooth", transitiontime]
+            payload["set_ct_abx"] = [int((-4800/347) * value + 2989900/347), "smooth", transitiontime]
             if value == 500: #use max/min if set to values in hue
                 payload["set_ct_abx"] = [int(1700), "smooth", transitiontime]
             if value == 153:
@@ -139,9 +139,9 @@ def get_light_state(address, light):
         msg_ct=json.dumps({"id": 1, "method": "get_prop", "params":["ct"]}) + "\r\n"
         tcp_socket.send(msg_ct.encode())
         data = tcp_socket.recv(16 * 1024)
-        tempval = int(994500 / int(json.loads(data[:-2].decode("utf8"))["result"][0]))
+        tempval = int(-(347/4800) * int(json.loads(data[:-2].decode("utf8"))["result"][0]) +(2989900/4800))
         if tempval > 369: tempval = 369
-        state["ct"] = tempval # int(994500 / int(json.loads(data[:-2].decode("utf8"))["result"][0]))
+        state["ct"] = tempval # int(-(347/4800) * int(json.loads(data[:-2].decode("utf8"))["result"][0]) +(2989900/4800))
         state["colormode"] = "ct"
     else:
         msg_mode=json.dumps({"id": 1, "method": "get_prop", "params":["color_mode"]}) + "\r\n"
@@ -168,7 +168,7 @@ def get_light_state(address, light):
             msg_ct=json.dumps({"id": 1, "method": "get_prop", "params":["ct"]}) + "\r\n"
             tcp_socket.send(msg_ct.encode())
             data = tcp_socket.recv(16 * 1024)
-            state["ct"] =  int(994500 / int(json.loads(data[:-2].decode("utf8"))["result"][0]))
+            state["ct"] =  int(-(347/4800) * int(json.loads(data[:-2].decode("utf8"))["result"][0]) +(2989900/4800))
             if state["ct"] > 500: #hue doesn't like values outside of the range and wont display colors otherwise
                 state["ct"] = 500
             if state["ct"] < 153:
