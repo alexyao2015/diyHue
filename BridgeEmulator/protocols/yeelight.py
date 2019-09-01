@@ -98,10 +98,6 @@ def set_light(address, light, data):
             if light["name"].find("desklamp") > 0:
                 if value > 369: value = 369
             payload["set_ct_abx"] = [int((-4800/347) * value + 2989900/347), "smooth", transitiontime]
-            if value == 500: #use max/min if set to values in hue
-                payload["set_ct_abx"] = [int(1700), "smooth", transitiontime]
-            if value == 153:
-                payload["set_ct_abx"] = [int(6500), "smooth", transitiontime]
         elif key == "hue":
             payload["set_hsv"] = [int(value / 182), int(light["state"]["sat"] / 2.54), "smooth", transitiontime]
         elif key == "sat":
@@ -169,10 +165,6 @@ def get_light_state(address, light):
             tcp_socket.send(msg_ct.encode())
             data = tcp_socket.recv(16 * 1024)
             state["ct"] =  int(-(347/4800) * int(json.loads(data[:-2].decode("utf8"))["result"][0]) +(2989900/4800))
-            if state["ct"] > 500: #hue doesn't like values outside of the range and wont display colors otherwise
-                state["ct"] = 500
-            if state["ct"] < 153:
-                state["ct"] = 153
             state["colormode"] = "ct"
         elif json.loads(data[:-2].decode("utf8"))["result"][0] == "3": #hs mode
             msg_hsv=json.dumps({"id": 1, "method": "get_prop", "params":["hue","sat"]}) + "\r\n"
