@@ -221,8 +221,10 @@ def syncWithLights(lights, addresses, users, groups): #update Hue Bridge lights 
                 protocol_name = addresses[light]["protocol"]
                 for protocol in protocols:
                     if "protocols." + protocol_name == protocol.__name__:
-                        light_state = protocol.get_light_state(addresses[light], lights[light])
-                        lights[light]["state"].update(light_state)
+                        use_protocol = protocol
+
+                light_state = use_protocol.get_light_state(addresses[light], lights[light])
+                lights[light]["state"].update(light_state)
 
                 if addresses[light]["protocol"] == "native":
                     light_data = json.loads(sendRequest("http://" + addresses[light]["ip"] + "/get?light=" + str(addresses[light]["light_nr"]), "GET", "{}"))
