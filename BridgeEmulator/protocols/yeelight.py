@@ -75,8 +75,8 @@ def command(ip, api_method, param):
         msg = json.dumps({"id": 1, "method": api_method, "params": param}) + "\r\n"
         tcp_socket.send(msg.encode())
         tcp_socket.close()
-    except Exception:
-        logging.exception("Unexpected error")
+    except Exception as e:
+        logging.exception("Yeelight command error: Offline or API Overloaded")
 
 
 def set_light(address, light, data):
