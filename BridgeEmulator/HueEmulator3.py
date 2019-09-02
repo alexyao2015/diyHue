@@ -30,7 +30,7 @@ from functions.email import sendEmail
 from functions.request import sendRequest
 from functions.lightRequest import sendLightRequest, syncWithLights
 from functions.updateGroup import updateGroupStats
-from protocols import protocols, yeelight, tasmota, native_single, native_multi
+from protocols import protocols, yeelight, tasmota, native_single, native_multi, esphome
 
 update_lights_on_startup = False # if set to true all lights will be updated with last know state on startup.
 
@@ -138,7 +138,7 @@ else:
   deconz_ip = "127.0.0.1"
 logging.info(deconz_ip)
 
-protocols = [yeelight, tasmota, native_single, native_multi]
+protocols = [yeelight, tasmota, native_single, native_multi, esphome]
 
 cwd = os.path.split(os.path.abspath(__file__))[0]
 
@@ -624,10 +624,11 @@ def generate_unique_id():
 def scan_for_lights(): #scan for ESP8266 lights and strips
     Thread(target=yeelight.discover, args=[bridge_config, new_lights]).start()
     Thread(target=tasmota.discover, args=[bridge_config, new_lights]).start()
+    Thread(target=esphome.discover, args=[bridge_config, new_lights]).start()
     #return all host that listen on port 80
     device_ips = find_hosts(80)
     logging.info(pretty_json(device_ips))
-    logging.debug('devs', device_ips)
+    #logging.debug('devs', device_ips)
     for ip in device_ips:
         try:
             response = requests.get("http://" + ip + "/detect", timeout=3)
