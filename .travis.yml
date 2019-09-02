@@ -4,8 +4,8 @@ services:
 language: bash
 env:
   - ARCH=amd64
-  - ARCH=arm
-  - ARCH=aarch64
+#  - ARCH=arm
+#  - ARCH=aarch64
 script:
 # Setup QEMU for ARM image build
 - docker run --rm --privileged multiarch/qemu-user-static:register
@@ -16,30 +16,32 @@ script:
 #- docker tag yaoa/diyhue:$ARCH yaoa/diyhue:$ARCH-dev
 #- docker push yaoa/diyhue:$ARCH-dev
 # Pull dev image to run tests
-- docker run -d --name "diyHue" --network="host" -v '/mnt/hue-emulator/export/':'/opt/hue-emulator/export/':'rw' -e 'MAC=b8:27:eb:d4:dc:11' -e 'IP=192.168.1.123' -e 'DECONZ=192.168.1.111' -e 'IP_RANGE=5,200' -e 'DEBUG=true' yaoa/diyhue:$ARCH
+##- docker run -d --name "diyHue" --network="host" -v '/mnt/hue-emulator/export/':'/opt/hue-emulator/export/':'rw' -e 'MAC=b8:27:eb:d4:dc:11' -e 'IP=192.168.1.123' -e 'DECONZ=192.168.1.111' -e 'IP_RANGE=5,200' -e 'DEBUG=true' yaoa/diyhue:$ARCH
 # Wait for logs to populate, then list them
-- sleep 30
-- docker logs diyHue
+##- sleep 30
+##- docker logs diyHue
 # Kill and remove test container
-- docker kill diyHue
-- docker rm diyHue
-- docker history yaoa/diyhue:$ARCH
-- docker images
+##- docker kill diyHue
+##- docker rm diyHue
+##- docker history yaoa/diyhue:$ARCH
+##- docker images
 
 after_success:
 # Tag and push built images
-- >
-  if [ "$TRAVIS_BRANCH" == "debug" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
-    docker login -u="$DOCKER_USER" -p="$DOCKER_PASS"
-    docker tag yaoa/diyhue:$ARCH yaoa/diyhue:DEBUG-$ARCH-$TRAVIS_COMMIT
-    docker push yaoa/diyhue:DEBUG-$ARCH
-    docker push yaoa/diyhue:DEBUG-$ARCH-$TRAVIS_COMMIT
+# - >
+#   if [ "$TRAVIS_BRANCH" == "debug" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+#     docker login -u="$DOCKER_USER" -p="$DOCKER_PASS"
+#     docker tag yaoa/diyhue:$ARCH yaoa/diyhue:DEBUG-$ARCH-$TRAVIS_COMMIT
+#     docker push yaoa/diyhue:DEBUG-$ARCH
+#     docker push yaoa/diyhue:DEBUG-$ARCH-$TRAVIS_COMMIT
     
-    # Download manifest-tool
-    wget https://github.com/estesp/manifest-tool/releases/download/v0.7.0/manifest-tool-linux-amd64
-    mv manifest-tool-linux-amd64 manifest-tool
-    chmod +x manifest-tool
-    # Push manifest-list
-    ./manifest-tool push from-args --platforms linux/amd64,linux/arm --template "yaoa/diyhue:DEBUG-ARCH-${TRAVIS_COMMIT}" --target "yaoa/diyhue:DEBUG-$TRAVIS_COMMIT"
-    ./manifest-tool push from-args --platforms linux/amd64,linux/arm --template "yaoa/diyhue:DEBUG-ARCH-${TRAVIS_COMMIT}" --target "yaoa/diyhue:DEBUG-latest"
-  fi
+#     # Download manifest-tool
+#     wget https://github.com/estesp/manifest-tool/releases/download/v0.7.0/manifest-tool-linux-amd64
+#     mv manifest-tool-linux-amd64 manifest-tool
+#     chmod +x manifest-tool
+#     # Push manifest-list
+#     ./manifest-tool push from-args --platforms linux/amd64,linux/arm --template "yaoa/diyhue:DEBUG-ARCH-${TRAVIS_COMMIT}" --target "yaoa/diyhue:DEBUG-$TRAVIS_COMMIT"
+#     ./manifest-tool push from-args --platforms linux/amd64,linux/arm --template "yaoa/diyhue:DEBUG-ARCH-${TRAVIS_COMMIT}" --target "yaoa/diyhue:DEBUG-latest"
+#   fi
+- docker login -u="$DOCKER_USER" -p="$DOCKER_PASS"
+- docker push yaoa/diyhue:DEBUG-latest
