@@ -14,6 +14,7 @@ def sendLightRequest(light, data, lights, addresses):
         for protocol in protocols:
             if "protocols." + protocol_name == protocol.__name__:
                 try:
+                    logging.debug("Setting light state for " + lights[light]["name"])
                     light_state = protocol.set_light(addresses[light], lights[light], data)
                 except Exception as e:
                     lights[light]["state"]["reachable"] = False
