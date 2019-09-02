@@ -76,7 +76,7 @@ def command(ip, api_method, param):
         tcp_socket.send(msg.encode())
         tcp_socket.close()
     except Exception as e:
-        logging.exception("Yeelight command error: Offline or API Overloaded")
+        logging.warning("Yeelight command error: Offline or API Overloaded %s", e)
 
 
 def set_light(address, light, data):
