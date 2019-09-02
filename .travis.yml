@@ -43,5 +43,6 @@ after_success:
 #     ./manifest-tool push from-args --platforms linux/amd64,linux/arm --template "yaoa/diyhue:DEBUG-ARCH-${TRAVIS_COMMIT}" --target "yaoa/diyhue:DEBUG-$TRAVIS_COMMIT"
 #     ./manifest-tool push from-args --platforms linux/amd64,linux/arm --template "yaoa/diyhue:DEBUG-ARCH-${TRAVIS_COMMIT}" --target "yaoa/diyhue:DEBUG-latest"
 #   fi
+- docker tag yaoa/diyhue:$ARCH yaoa/diyhue:DEBUG-latest
 - docker login -u="$DOCKER_USER" -p="$DOCKER_PASS"
 - docker push yaoa/diyhue:DEBUG-latest
