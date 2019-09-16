@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import argparse
 import base64
-import hashlib
 import json
 import logging
 import os
@@ -10,6 +9,7 @@ import socket
 import ssl
 import sys
 import requests
+import uuid
 from collections import defaultdict
 from datetime import datetime, timedelta
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -174,9 +174,12 @@ def initialize():
     bridge_config["config"]["gateway"] = ip_pices[0] + "." +  ip_pices[1] + "." + ip_pices[2] + ".1"
     bridge_config["config"]["mac"] = mac[0] + mac[1] + ":" + mac[2] + mac[3] + ":" + mac[4] + mac[5] + ":" + mac[6] + mac[7] + ":" + mac[8] + mac[9] + ":" + mac[10] + mac[11]
     bridge_config["config"]["bridgeid"] = (mac[:6] + 'FFFE' + mac[6:]).upper()
-
     load_alarm_config()
     generateSensorsState()
+    ## generte security key for Hue Essentials remote access
+    if "Hue Essentials key" not in bridge_config["config"]:
+        bridge_config["config"]["Hue Essentials key"] = str(uuid.uuid1()).replace('-', '')
+
 
 def getLightsVersions():
     lights = {}
@@ -713,7 +716,7 @@ def scan_for_lights(): #scan for ESP8266 lights and strips
                                 "protocol": protocol,
                                 "mac": device_data["mac"]
                             }
-                except ValueError:  
+                except ValueError:
                     logging.info('Decoding JSON from %s has failed', ip)
         except Exception as e:
             logging.info("ip %s is unknown device: %s", ip, e)
@@ -1118,11 +1121,11 @@ class S(BaseHTTPRequestHandler):
     protocol_version = 'HTTP/1.1'
     server_version = 'nginx'
     sys_version = ''
-    
+
     def _set_headers(self):
-        
+
         self.send_response(200)
-        
+
         mimetypes = {"json": "application/json", "map": "application/json", "html": "text/html", "xml": "application/xml", "js": "text/javascript", "css": "text/css", "png": "image/png"}
         if self.path.endswith((".html",".json",".css",".map",".png",".js", ".xml")):
             self.send_header('Content-type', mimetypes[self.path.split(".")[-1]])
@@ -1362,7 +1365,7 @@ class S(BaseHTTPRequestHandler):
                     if bridge_config["sensors"][sensorId]["config"]["on"]: #match senser id based on mac address
                         current_time = datetime.now()
                         if bridge_config["sensors"][sensorId]["type"] in ["ZLLSwitch","ZGPSwitch"]:
-                            bridge_config["sensors"][sensorId]["state"].update({"buttonevent": get_parameters["button"][0], "lastupdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")})
+                            bridge_config["sensors"][sensorId]["state"].update({"buttonevent": int(get_parameters["button"][0]), "lastupdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")})
                             sensors_state[sensorId]["state"]["lastupdated"] = current_time
                         elif bridge_config["sensors"][sensorId]["type"] == "ZLLPresence":
                             lightSensorId = bridge_config["emulator"]["sensors"][get_parameters["mac"][0]]["lightSensorId"]
@@ -1373,7 +1376,7 @@ class S(BaseHTTPRequestHandler):
                             Thread(target=motionDetected, args=[sensorId]).start()
 
                             if "lightlevel" in get_parameters:
-                                bridge_config["sensors"][lightSensorId]["state"].update({"lightlevel": get_parameters["lightlevel"][0], "dark": get_parameters["dark"][0], "daylight": get_parameters["daylight"][0], "lastupdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")})
+                                bridge_config["sensors"][lightSensorId]["state"].update({"lightlevel": int(get_parameters["lightlevel"][0]), "dark": bool(get_parameters["dark"][0]), "daylight": bool(get_parameters["daylight"][0]), "lastupdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")})
                             else:
                                 if bridge_config["sensors"]["1"]["modelid"] == "PHDL00" and bridge_config["sensors"]["1"]["state"]["daylight"]:
                                     bridge_config["sensors"][lightSensorId]["state"].update({"lightlevel": 25000, "dark": False, "daylight": True, "lastupdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S") })
@@ -1512,7 +1515,9 @@ class S(BaseHTTPRequestHandler):
             last_button_press = int(bridge_config["linkbutton"]["lastlinkbuttonpushed"])
             if (args.no_link_button or last_button_press+30 >= int(datetime.now().strftime("%s")) or
                     bridge_config["config"]["linkbutton"]):
-                username = hashlib.new('ripemd160', post_dictionary["devicetype"][0].encode('utf-8')).hexdigest()[:32]
+                username = str(uuid.uuid1()).replace('-', '')
+                if post_dictionary["devicetype"].startswith("Hue Essentials"):
+                    username = "hueess" + username[-26:]
                 bridge_config["config"]["whitelist"][username] = {"last use date": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"),"create date": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S"),"name": post_dictionary["devicetype"]}
                 response = [{"success": {"username": username}}]
                 if "generateclientkey" in post_dictionary and post_dictionary["generateclientkey"]:
@@ -1658,7 +1663,7 @@ class S(BaseHTTPRequestHandler):
         else:
             self._set_end_headers(bytes(json.dumps([{"error": {"type": 1, "address": self.path, "description": "unauthorized user" }}],separators=(',', ':'),ensure_ascii=False), "utf8"))
 
-    def do_OPTIONS(self): 
+    def do_OPTIONS(self):
         self.send_response(200, "ok")
         self._set_end_headers(bytes(json.dumps([{"status": "success"}]), "utf8"))
 
@@ -1716,7 +1721,7 @@ def run(https, server_class=ThreadingSimpleServer, handler_class=S):
         server_address = ('', HOST_HTTPS_PORT)
         httpd = server_class(server_address, handler_class)
         ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-        ctx.load_cert_chain(certfile="./cert.pem")
+        ctx.load_cert_chain(certfile="/opt/hue-emulator/cert.pem")
         ctx.options |= ssl.OP_NO_TLSv1
         ctx.options |= ssl.OP_NO_TLSv1_1
         ctx.options |= ssl.OP_CIPHER_SERVER_PREFERENCE
@@ -1751,7 +1756,7 @@ if __name__ == "__main__":
             Thread(target=run, args=[True]).start()
         Thread(target=daylightSensor).start()
         if dontBlameDiyHue:
-            Thread(target=remoteApi, args=[bridge_config["config"]["whitelist"]]).start()
+            Thread(target=remoteApi, args=[bridge_config["config"]]).start()
 
         while True:
             sleep(10)
