@@ -1586,6 +1586,7 @@ class S(BaseHTTPRequestHandler):
                         bridge_config[url_pices[3]][url_pices[4]].update(put_dictionary)
                 elif url_pices[3] == "lights" and "config" in put_dictionary:
                     bridge_config["lights"][url_pices[4]]["config"].update(put_dictionary["config"])
+                    logging.debug("light startup mode called")
                     if "startup" in put_dictionary["config"] and bridge_config["lights_address"][url_pices[4]]["protocol"] == "native":
                         if put_dictionary["config"]["startup"]["mode"] == "safety":
                             sendRequest("http://" + bridge_config["lights_address"][url_pices[4]]["ip"] + "/", "POST", {"startup": 1})
