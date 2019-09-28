@@ -1586,18 +1586,20 @@ class S(BaseHTTPRequestHandler):
                         bridge_config[url_pices[3]][url_pices[4]].update(put_dictionary)
                 elif url_pices[3] == "lights" and "config" in put_dictionary:
                     bridge_config["lights"][url_pices[4]]["config"].update(put_dictionary["config"])
-                    logging.debug("light startup mode called")
                     if "startup" in put_dictionary["config"] and bridge_config["lights_address"][url_pices[4]]["protocol"] == "native":
                         if put_dictionary["config"]["startup"]["mode"] == "safety":
                             sendRequest("http://" + bridge_config["lights_address"][url_pices[4]]["ip"] + "/", "POST", {"startup": 1})
                         elif put_dictionary["config"]["startup"]["mode"] == "powerfail":
-                            sendRequest("http://" + bridge_config["lights_address"][url_pices[4]]["ip"] + "/", "POST", {"startup": 0})
-
-                        #add exception on json output as this dictionary has tree levels
-                        response_dictionary = {"success":{"/lights/" + url_pices[4] + "/config/startup": {"mode": put_dictionary["config"]["startup"]["mode"]}}}
-                        self._set_end_headers(bytes(json.dumps(response_dictionary,separators=(',', ':'),ensure_ascii=False), "utf8"))
-                        logging.info(json.dumps(response_dictionary, sort_keys=True, indent=4, separators=(',', ': ')))
-                        return
+                            sendRequest("http://" + bridge_config["lights_address"][url_pices[4]]["ip"] + "/", "POST", {"startup": 0})                           
+                    #2019-09-28 19:54:42,969 - root - INFO - b'{"config":{"startup":{"mode":"safety"}}}'
+                    #2019-09-28 19:54:56,373 - root - INFO - b'{"config":{"startup":{"mode":"powerfail"}}}'
+                    #2019-09-28 19:55:14,382 - root - INFO - b'{"config":{"startup":{"mode":"custom","customsettings":{"bri":254,"ct":327}}}}'
+                    #2019-09-28 19:56:45,914 - root - INFO - b'{"config":{"startup":{"mode":"custom","customsettings":{"bri":254,"xy":[0.494756,0.228088]}}}}'
+                    #add exception on json output as this dictionary has tree levels
+                    response_dictionary = {"success":{"/lights/" + url_pices[4] + "/config/startup": {"mode": put_dictionary["config"]["startup"]["mode"]}}}
+                    self._set_end_headers(bytes(json.dumps(response_dictionary,separators=(',', ':'),ensure_ascii=False), "utf8"))
+                    logging.info(json.dumps(response_dictionary, sort_keys=True, indent=4, separators=(',', ': ')))
+                    return
                 else:
                     bridge_config[url_pices[3]][url_pices[4]].update(put_dictionary)
 

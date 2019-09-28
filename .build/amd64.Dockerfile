@@ -10,6 +10,14 @@ RUN cd /tmp && curl https://codeload.github.com/requests/requests/zip/v2.19.1 -o
 ## Install astral & ws4py python libraries
 RUN pip3 install astral==1.6.1 ws4py==0.5.1 --no-cache-dir
 
+## Install esphomeapi
+RUN cd /tmp && \
+    curl https://codeload.github.com/esphome/aioesphomeapi/zip/v2.2.0 -o aioesphomeapi.zip && \
+    unzip -q -o aioesphomeapi.zip && \
+    cd aioesphomeapi-2.2.0/ && \
+    python3 setup.py install && \
+    rm -rf /tmp/*
+
 ## Install diyHue
 COPY ./BridgeEmulator/web-ui/ /opt/hue-emulator/web-ui/
 COPY ./BridgeEmulator/functions/ /opt/hue-emulator/functions/
