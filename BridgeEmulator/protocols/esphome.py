@@ -133,7 +133,7 @@ def set_light(address, light, data):
     if address["esphome_model"] == "ESPHome-RGBW":
         if "ct" in data:
             postRequest(address["ip"], "/light/color_led/turn_off")
-        if ("xy" in data) or ("hs" in data):
+        if ("xy" in data) or ("hue" in data) or ("sat" in data):
             postRequest(address["ip"], "/light/white_led/turn_off")
     if ("alert" in data) and (data['alert'] == "select"):
             request_data = request_data + "/switch/alert/turn_on"
@@ -191,9 +191,9 @@ def set_light(address, light, data):
                     request_data = request_data + "?r=" + red + "&g=" + green + "&b=" + blue
         if "transitiontime" in data:
             if ("?" in request_data):
-                request_data = request_data + "&transition=" + str(data['transitiontime'])
+                request_data = request_data + "&transition=" + str(((int(data['transitiontime'])*16)/1000))
             else:
-                request_data = request_data + "?transition=" + str(data['transitiontime'])
+                request_data = request_data + "?transition=" + str(((int(data['transitiontime'])*16)/1000))
 
     postRequest(address["ip"], request_data)
 
