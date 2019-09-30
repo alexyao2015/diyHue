@@ -180,8 +180,12 @@ def set_light(address, light, data):
                     request_data = request_data + "&r=" + red + "&g=" + green + "&b=" + blue 
                 else:
                     request_data = request_data + "?r=" + red + "&g=" + green + "&b=" + blue
-            elif ("hue" in data) and ("sat" in data) and ("bri" in data):
-                color = hsv_to_rgb(data['hue'], data['sat'], data['bri'])
+            elif ("hue" in data) and ("sat" in data):
+                if not("bri" in data):
+                    bri = light["state"]["bri"]
+                else:
+                    bri = data['bri']
+                color = hsv_to_rgb(data['hue'], data['sat'], bri)
                 red = str(color[0])
                 green = str(color[1])
                 blue = str(color[2])
