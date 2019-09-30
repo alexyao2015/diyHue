@@ -130,7 +130,6 @@ def set_light(address, light, data):
     ct_boost = int(address["ct_boost"])
     rgb_boost = int(address["rgb_boost"])
     request_data = ""
-    #logging.debug("tasmota: key " + key)
     if address["esphome_model"] == "ESPHome-RGBW":
         if "ct" in data:
             postRequest(address["ip"], "/light/color_led/turn_off")
@@ -184,39 +183,6 @@ def set_light(address, light, data):
                         request_data = request_data + "&transition=" + str(data['transitiontime'])
                     else:
                         request_data = request_data + "?transition=" + str(data['transitiontime'])
-        except: #entertainment mode
-            if address["esphome_model"] == "ESPHome-RGBW": #only for RGBW
-                request_data = request_data + "/turn_on"
-                if "bri" in data:
-                    brightness = int(data['bri'])
-                    if light["state"]["colormode"] == "ct":
-                        brightness = ct_boost + brightness
-                    elif light["state"]["colormode"] == "xy":
-                        brightness = rgb_boost + brightness
-                    brightness = str(brightness)
-                    if ("?" in request_data):
-                        request_data = request_data + "&brightness=" + brightness
-                    else:
-                        request_data = request_data + "?brightness=" + brightness
-                if "ct" in data:
-                    if ("?" in request_data):
-                        request_data = request_data + "&color_temp=" + str(data['ct'])
-                    else:
-                        request_data = request_data + "?color_temp=" + str(data['ct'])
-                if "xy" in data:
-                    color = convert_xy(data['xy'][0], data['xy'][1], 255)
-                    red = str(color[0])
-                    green = str(color[1])
-                    blue = str(color[2])
-                    if ("?" in request_data):
-                        request_data = request_data + "&r=" + red + "&g=" + green + "&b=" + blue 
-                    else:
-                        request_data = request_data + "?r=" + red + "&g=" + green + "&b=" + blue
-                if "transitiontime" in data:
-                    if ("?" in request_data):
-                        request_data = request_data + "&transition=" + str("0.7") #lower transition time for entertainment
-                    else:
-                        request_data = request_data + "?transition=" + str("0.7")
 
     postRequest(address["ip"], request_data)
 
