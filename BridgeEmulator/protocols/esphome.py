@@ -146,58 +146,59 @@ def set_light(address, light, data):
                 request_data = request_data + "/turn_on"
         else:
             request_data = request_data + "/turn_on"
-        if "bri" in data:
-            brightness = int(data['bri'])
-            if address["esphome_model"] == "ESPHome-RGBW":
-                if light["state"]["colormode"] == "ct":
+        if address["esphome_model"] is not "ESPHome-Toggle":
+            if "bri" in data:
+                brightness = int(data['bri'])
+                if address["esphome_model"] == "ESPHome-RGBW":
+                    if light["state"]["colormode"] == "ct":
+                        brightness = ct_boost + brightness
+                    elif light["state"]["colormode"] == "xy":
+                        brightness = rgb_boost + brightness
+                elif address["esphome_model"] == "ESPHome-CT":
                     brightness = ct_boost + brightness
-                elif light["state"]["colormode"] == "xy":
+                elif address["esphome_model"] == "ESPHome-RGB":
                     brightness = rgb_boost + brightness
-            elif address["esphome_model"] == "ESPHome-CT":
-                brightness = ct_boost + brightness
-            elif address["esphome_model"] == "ESPHome-RGB":
-                brightness = rgb_boost + brightness
-            elif address["esphome_model"] == "ESPHome-Dimmable":
-                brightness = ct_boost + brightness
-            brightness = str(brightness)
-            if ("?" in request_data):
-                request_data = request_data + "&brightness=" + brightness
-            else:
-                request_data = request_data + "?brightness=" + brightness
-        if address["esphome_model"] in ["ESPHome-RGBW", "ESPHome-CT"]:
-            if "ct" in data:
+                elif address["esphome_model"] == "ESPHome-Dimmable":
+                    brightness = ct_boost + brightness
+                brightness = str(brightness)
                 if ("?" in request_data):
-                    request_data = request_data + "&color_temp=" + str(data['ct'])
+                    request_data = request_data + "&brightness=" + brightness
                 else:
-                    request_data = request_data + "?color_temp=" + str(data['ct'])
-        if address["esphome_model"] in ["ESPHome-RGBW", "ESPHome-RGB"]:
-            if "xy" in data:
-                color = convert_xy(data['xy'][0], data['xy'][1], 255)
-                red = str(color[0])
-                green = str(color[1])
-                blue = str(color[2])
+                    request_data = request_data + "?brightness=" + brightness
+            if address["esphome_model"] in ["ESPHome-RGBW", "ESPHome-CT"]:
+                if "ct" in data:
+                    if ("?" in request_data):
+                        request_data = request_data + "&color_temp=" + str(data['ct'])
+                    else:
+                        request_data = request_data + "?color_temp=" + str(data['ct'])
+            if address["esphome_model"] in ["ESPHome-RGBW", "ESPHome-RGB"]:
+                if "xy" in data:
+                    color = convert_xy(data['xy'][0], data['xy'][1], 255)
+                    red = str(color[0])
+                    green = str(color[1])
+                    blue = str(color[2])
+                    if ("?" in request_data):
+                        request_data = request_data + "&r=" + red + "&g=" + green + "&b=" + blue 
+                    else:
+                        request_data = request_data + "?r=" + red + "&g=" + green + "&b=" + blue
+                elif ("hue" in data) and ("sat" in data):
+                    if not("bri" in data):
+                        bri = light["state"]["bri"]
+                    else:
+                        bri = data['bri']
+                    color = hsv_to_rgb(data['hue'], data['sat'], bri)
+                    red = str(color[0])
+                    green = str(color[1])
+                    blue = str(color[2])
+                    if ("?" in request_data):
+                        request_data = request_data + "&r=" + red + "&g=" + green + "&b=" + blue 
+                    else:
+                        request_data = request_data + "?r=" + red + "&g=" + green + "&b=" + blue
+            if "transitiontime" in data:
                 if ("?" in request_data):
-                    request_data = request_data + "&r=" + red + "&g=" + green + "&b=" + blue 
+                    request_data = request_data + "&transition=" + str(int(data['transitiontime']/10))
                 else:
-                    request_data = request_data + "?r=" + red + "&g=" + green + "&b=" + blue
-            elif ("hue" in data) and ("sat" in data):
-                if not("bri" in data):
-                    bri = light["state"]["bri"]
-                else:
-                    bri = data['bri']
-                color = hsv_to_rgb(data['hue'], data['sat'], bri)
-                red = str(color[0])
-                green = str(color[1])
-                blue = str(color[2])
-                if ("?" in request_data):
-                    request_data = request_data + "&r=" + red + "&g=" + green + "&b=" + blue 
-                else:
-                    request_data = request_data + "?r=" + red + "&g=" + green + "&b=" + blue
-        if "transitiontime" in data:
-            if ("?" in request_data):
-                request_data = request_data + "&transition=" + str(int(data['transitiontime']/10))
-            else:
-                request_data = request_data + "?transition=" + str(int(data['transitiontime']/10))
+                    request_data = request_data + "?transition=" + str(int(data['transitiontime']/10))
 
     postRequest(address["ip"], request_data)
 
