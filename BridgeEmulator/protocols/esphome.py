@@ -202,9 +202,9 @@ def set_light(address, light, data):
                         request_data = request_data + "?r=" + red + "&g=" + green + "&b=" + blue
             if "transitiontime" in data:
                 if ("?" in request_data):
-                    request_data = request_data + "&transition=" + str(int(data['transitiontime']/10))
+                    request_data = request_data + "&transition=" + str(data['transitiontime']/10)
                 else:
-                    request_data = request_data + "?transition=" + str(int(data['transitiontime']/10))
+                    request_data = request_data + "?transition=" + str(data['transitiontime']/10)
 
     postRequest(address["ip"], request_data)
 
