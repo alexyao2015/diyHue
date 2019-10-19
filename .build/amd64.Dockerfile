@@ -2,7 +2,7 @@ FROM debian:stable-slim
 WORKDIR /opt/hue-emulator
 
 ## Install requirements
-RUN apt update && apt install -y python3 python3-setuptools python3-pip openssl unzip curl nmap psmisc iproute2 && rm -rf /var/lib/apt/lists/*
+RUN apt update && apt install -y python3 python3-setuptools python3-pip nano openssl unzip curl nmap psmisc iproute2 && rm -rf /var/lib/apt/lists/*
 
 ## Install python3-requests
 RUN cd /tmp && curl https://codeload.github.com/requests/requests/zip/v2.19.1 -o requests.zip && unzip -q -o requests.zip && cd requests-2.19.1/ && python3 setup.py install && rm -rf /tmp/*
