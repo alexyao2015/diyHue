@@ -1017,8 +1017,6 @@ def splitLightsToDevices(group, state, scene={}):
             groups.append(grp)
     else:
         groups.append(group)
-    logging.debug("begin scene output")
-    logging.debug(scene)
 
     lightsData = {}
     if len(scene) == 0:
@@ -1045,7 +1043,6 @@ def splitLightsToDevices(group, state, scene={}):
                 lightsData[light] = state
     else:
         lightsData = scene
-    logging.debug(lightsData)
 
     # Make sure any lights haven't been deleted
     lightsData = {k: v for k, v in lightsData.items() if k in bridge_config["lights_address"]}
@@ -1073,8 +1070,8 @@ def splitLightsToDevices(group, state, scene={}):
             bridge_config["lights"][light]["state"]["colormode"] = "ct"
         elif "hue" in lightsData[light]:
             bridge_config["lights"][light]["state"]["colormode"] = "hs"
-        if "transitiontime" in lightsData[light]:
-            del lightsData[light]["transitiontime"]
+        # if "transitiontime" in lightsData[light]:
+        #     del lightsData[light]["transitiontime"]
         bridge_config["lights"][light]["state"].update(lightsData[light])
     updateGroupStats(list(lightsData.keys())[0], bridge_config["lights"], bridge_config["groups"])
 
