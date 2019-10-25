@@ -1714,7 +1714,8 @@ class S(BaseHTTPRequestHandler):
                     except KeyError:
                         bridge_config[url_pices[3]][url_pices[4]][url_pices[5]] = put_dictionary
                 if url_pices[3] == "sensors" and url_pices[5] == "state":
-                    current_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S") #print time correctly
+                    current_time = datetime.now()
+                    #current_time = datetime.now().strftime("%Y-%m-%dT%H:%M:%S") #print time correctly
                     for key in put_dictionary.keys():
                         sensors_state[url_pices[4]]["state"].update({key: current_time})
                     rulesProcessor(url_pices[4], current_time)
