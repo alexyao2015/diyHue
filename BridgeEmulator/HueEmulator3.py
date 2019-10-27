@@ -36,7 +36,6 @@ from functions.remoteApi import remoteApi
 from functions.remoteDiscover import remoteDiscover
 
 update_lights_on_startup = False # if set to true all lights will be updated with last know state on startup.
-dontBlameDiyHue = False # If set to True it will enable a custom remote service that works with Hue Essentials (Beta!!!)
 off_if_unreachable = False # If set to true all lights that unreachable are marked as off.
 
 ap = argparse.ArgumentParser()
@@ -217,6 +216,9 @@ def updateConfig():
     if "emulator" not in bridge_config:
         bridge_config["emulator"] = {"lights": {}, "sensors": {}}
 
+    if "Remote API enabled" not in bridge_config["config"]:
+        bridge_config["config"]["Remote API enabled"] = False
+
     # Update deCONZ sensors
     for sensor_id, sensor in bridge_config["deconz"]["sensors"].items():
         if "modelid" not in sensor:
@@ -224,6 +226,11 @@ def updateConfig():
         if sensor["modelid"] == "TRADFRI motion sensor":
             if "lightsensor" not in sensor:
                 sensor["lightsensor"] = "internal"
+
+    # Update scenes
+    for scene_id, scene in bridge_config["scenes"].items():
+        if "type" not in scene:
+            scene["type"] = LightGroup
 
     # Update sensors
     for sensor_id, sensor in bridge_config["sensors"].items():
@@ -1192,7 +1199,7 @@ class S(BaseHTTPRequestHandler):
             self._set_end_headers(f.read())
         elif self.path == '/description.xml':
             self._set_headers()
-            self._set_end_headers(bytes(description(bridge_config["config"]["ipaddress"], mac, bridge_config["config"]["name"]), "utf8"))
+            self._set_end_headers(bytes(description(bridge_config["config"]["ipaddress"], HOST_HTTP_PORT, mac, bridge_config["config"]["name"]), "utf8"))
         elif self.path == "/lights.json":
             self._set_headers()
             self._set_end_headers(bytes(json.dumps(getLightsVersions() ,separators=(',', ':'),ensure_ascii=False), "utf8"))
@@ -1511,6 +1518,8 @@ class S(BaseHTTPRequestHandler):
                             post_dictionary["locked"] = False
                         if "picture" not in post_dictionary:
                             post_dictionary["picture"] = ""
+                        if "type" not in post_dictionary:
+                            post_dictionary["type"] = "LightScene"
                         if "lightstates" not in post_dictionary or len(post_dictionary["lightstates"]) == 0:
                             post_dictionary["lightstates"] = {}
                         if "lights" in post_dictionary:
@@ -1522,13 +1531,17 @@ class S(BaseHTTPRequestHandler):
                             if "bri" in bridge_config["lights"][light]["state"]:
                                 post_dictionary["lightstates"][light]["bri"] = bridge_config["lights"][light]["state"]["bri"]
                             if "colormode" in bridge_config["lights"][light]["state"]:
-                                if bridge_config["lights"][light]["state"]["colormode"] in ["ct", "xy"]:
+                                if bridge_config["lights"][light]["state"]["colormode"] in ["ct", "xy"] and bridge_config["lights"][light]["state"]["colormode"] in bridge_config["lights"][light]["state"]:
                                     post_dictionary["lightstates"][light][bridge_config["lights"][light]["state"]["colormode"]] = bridge_config["lights"][light]["state"][bridge_config["lights"][light]["state"]["colormode"]]
                                 elif bridge_config["lights"][light]["state"]["colormode"] == "hs":
                                     post_dictionary["lightstates"][light]["hue"] = bridge_config["lights"][light]["state"]["hue"]
                                     post_dictionary["lightstates"][light]["sat"] = bridge_config["lights"][light]["state"]["sat"]
 
                     elif url_pices[3] == "groups":
+                        if "type" not in post_dictionary:
+                            post_dictionary["type"] = "LightGroup"
+                        if post_dictionary["type"] == "Room" and "class" not in post_dictionary:
+                            post_dictionary["class"] = "Other"
                         post_dictionary.update({"action": {"on": False}, "state": {"any_on": False, "all_on": False}})
                     elif url_pices[3] == "schedules":
                         try:
@@ -1830,8 +1843,8 @@ if __name__ == "__main__":
     try:
         if update_lights_on_startup:
             Thread(target=updateAllLights).start()
-        Thread(target=ssdpSearch, args=[HOST_IP, mac]).start()
-        Thread(target=ssdpBroadcast, args=[HOST_IP, mac]).start()
+        Thread(target=ssdpSearch, args=[HOST_IP, HOST_HTTP_PORT, mac]).start()
+        Thread(target=ssdpBroadcast, args=[HOST_IP, HOST_HTTP_PORT, mac]).start()
         Thread(target=schedulerProcessor).start()
         Thread(target=syncWithLights, args=[bridge_config["lights"], bridge_config["lights_address"], bridge_config["config"]["whitelist"], bridge_config["groups"], off_if_unreachable]).start()
         Thread(target=entertainmentService, args=[bridge_config["lights"], bridge_config["lights_address"], bridge_config["groups"]]).start()
@@ -1839,9 +1852,8 @@ if __name__ == "__main__":
         if not args.no_serve_https:
             Thread(target=run, args=[True]).start()
         Thread(target=daylightSensor).start()
-        if dontBlameDiyHue:
-            Thread(target=remoteApi, args=[bridge_config["config"]]).start()
-            Thread(target=remoteDiscover, args=[bridge_config["config"]]).start()
+        Thread(target=remoteApi, args=[bridge_config["config"]]).start()
+        Thread(target=remoteDiscover, args=[bridge_config["config"]]).start()
 
         while True:
             sleep(10)

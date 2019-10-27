@@ -1,15 +1,15 @@
-def description(ip, mac, name):
+def description(ip, port, mac, name):
     return """<?xml version="1.0" encoding="UTF-8" ?>
 <root xmlns="urn:schemas-upnp-org:device-1-0">
 <specVersion>
 <major>1</major>
 <minor>0</minor>
 </specVersion>
-<URLBase>http://""" + ip + """:80/</URLBase>
+<URLBase>http://""" + ip + """:""" + str(port) + """/</URLBase>
 <device>
 <deviceType>urn:schemas-upnp-org:device:Basic:1</deviceType>
 <friendlyName>""" + name + """ (""" + ip + """)</friendlyName>
-<manufacturer>Royal Philips Electronics</manufacturer>
+<manufacturer>Signify</manufacturer>
 <manufacturerURL>http://www.philips.com</manufacturerURL>
 <modelDescription>Philips hue Personal Wireless Lighting</modelDescription>
 <modelName>Philips hue bridge 2015</modelName>
