@@ -222,8 +222,8 @@ def set_light(address, light, data):
                     request_data = addRequest(request_data, "b", color[2])
             if "transitiontime" in data:
                 request_data = addRequest(request_data, "transition", data['transitiontime']/10)
-            else: #Utilize default interval of 0.4
-                request_data = addRequest(request_data, "transition", 0.4)
+            # else: #Utilize default interval of 0.4
+            #     request_data = addRequest(request_data, "transition", 0.4)
 
     postRequest(address["ip"], request_data)
 
