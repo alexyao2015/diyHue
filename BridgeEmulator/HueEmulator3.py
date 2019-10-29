@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import argparse
 import base64
-import copy
 import json
 import logging
 import os
