@@ -5,7 +5,6 @@ import json
 import logging
 import os
 import random
-import signal
 import socket
 import ssl
 import sys
@@ -38,7 +37,6 @@ from functions.remoteDiscover import remoteDiscover
 update_lights_on_startup = False # if set to true all lights will be updated with last know state on startup.
 off_if_unreachable = False # If set to true all lights that unreachable are marked as off.
 protocols = [yeelight, tasmota, native_single, native_multi, esphome]
-run_service = True
 
 ap = argparse.ArgumentParser()
 
@@ -159,6 +157,8 @@ cwd = os.path.split(os.path.abspath(__file__))[0]
 
 def pretty_json(data):
     return json.dumps(data, sort_keys=True,                  indent=4, separators=(',', ': '))
+
+run_service = True
 
 def initialize():
     global bridge_config, new_lights, sensors_state
@@ -473,7 +473,7 @@ def schedulerProcessor():
 
         if (datetime.now().strftime("%M:%S") == "00:10"): #auto save configuration every hour
             saveConfig()
-            Thread(target=daylightSensor, daemon=True).start()
+            Thread(target=daylightSensor).start()
             if (datetime.now().strftime("%H") == "23" and datetime.now().strftime("%A") == "Sunday"): #backup config every Sunday at 23:00:10
                 if docker:
                     saveConfig("export/config-backup-" + datetime.now().strftime("%Y-%m-%d") + ".json")
@@ -629,7 +629,7 @@ def rulesProcessor(sensor, current_time):
                         actionsToExecute.append(action)
                 else: #if ddx rule
                     logging.info("ddx rule " + rule + " will be re validated after " + str(rule_result[1]) + " seconds")
-                    Thread(target=ddxRecheck, args=[rule, sensor, current_time, rule_result[1], rule_result[2]], daemon=True).start()
+                    Thread(target=ddxRecheck, args=[rule, sensor, current_time, rule_result[1], rule_result[2]]).start()
     for action in actionsToExecute:
         sendRequest("/api/" +    list(bridge_config["config"]["whitelist"])[0] + action["address"], action["method"], json.dumps(action["body"]))
 
@@ -686,9 +686,9 @@ def generate_unique_id():
     return "00:17:88:01:00:%02x:%02x:%02x-0b" % (*rand_bytes,)
 
 def scan_for_lights(): #scan for ESP8266 lights and strips
-    Thread(target=yeelight.discover, args=[bridge_config, new_lights], daemon=True).start()
-    Thread(target=tasmota.discover, args=[bridge_config, new_lights], daemon=True).start()
-    Thread(target=esphome.discover, args=[bridge_config, new_lights], daemon=True).start()
+    Thread(target=yeelight.discover, args=[bridge_config, new_lights]).start()
+    Thread(target=tasmota.discover, args=[bridge_config, new_lights]).start()
+    Thread(target=esphome.discover, args=[bridge_config, new_lights]).start()
     #return all host that listen on port 80
     device_ips = find_hosts(80)
     logging.info(pretty_json(device_ips))
@@ -920,7 +920,7 @@ def websocketClient():
                             bridge_config["sensors"][light_sensor]["state"]["lastupdated"] = message["state"]["lastupdated"]
                             message["state"] = {"motion": True, "lastupdated": message["state"]["lastupdated"]} #empty the message state for non Hue motion states (we need to know there was an event only)
                             logging.info("Vibration: set motion = True")
-                            Thread(target=motionDetected, args=[bridge_sensor_id], daemon=True).start()
+                            Thread(target=motionDetected, args=[bridge_sensor_id]).start()
 
 
                         bridge_config["sensors"][bridge_sensor_id]["state"].update(message["state"])
@@ -930,7 +930,7 @@ def websocketClient():
                         rulesProcessor(bridge_sensor_id, current_time)
                         if "buttonevent" in message["state"] and bridge_config["deconz"]["sensors"][message["id"]]["modelid"] in ["TRADFRI remote control","RWL021"]:
                             if message["state"]["buttonevent"] in [2001, 3001, 4001, 5001]:
-                                Thread(target=longPressButton, args=[bridge_sensor_id, message["state"]["buttonevent"]], daemon=True).start()
+                                Thread(target=longPressButton, args=[bridge_sensor_id, message["state"]["buttonevent"]]).start()
                         if "presence" in message["state"] and message["state"]["presence"] and "virtual_light" in bridge_config["alarm_config"] and bridge_config["lights"][bridge_config["alarm_config"]["virtual_light"]]["state"]["on"]:
                             sendEmail(bridge_config["alarm_config"], bridge_config["sensors"][bridge_sensor_id]["name"])
                             bridge_config["alarm_config"]["virtual_light"]
@@ -1020,7 +1020,7 @@ def scanDeconz():
 
         if "websocketport" in bridge_config["deconz"]:
             logging.info("Starting deconz websocket")
-            Thread(target=websocketClient, daemon=True).start()
+            Thread(target=websocketClient).start()
 
 
 def updateAllLights():
@@ -1047,7 +1047,7 @@ def manageDeviceLights(lights_state):
             if protocol == "milight": #hotfix to avoid milight hub overload
                 sleep(0.05)
         else:
-            Thread(target=sendLightRequest, args=[light, lights_state[light], bridge_config["lights"], bridge_config["lights_address"]], daemon=True).start()
+            Thread(target=sendLightRequest, args=[light, lights_state[light], bridge_config["lights"], bridge_config["lights_address"]]).start()
             sleep(0.1)
     if protocol == "native_multi":
         requests.put("http://"+bridge_config["lights_address"][list(lights_state.keys())[0]]["ip"]+"/state", json=payload, timeout=3)
@@ -1105,7 +1105,7 @@ def splitLightsToDevices(group, state, scene={}):
             deviceIp[bridge_config["lights_address"][light]["ip"]] = {}
         deviceIp[bridge_config["lights_address"][light]["ip"]][light] = lightsData[light]
     for ip in deviceIp:
-        Thread(target=manageDeviceLights, args=[deviceIp[ip]], daemon=True).start()
+        Thread(target=manageDeviceLights, args=[deviceIp[ip]]).start()
     ### update light details
     for light in lightsData.keys():
         if "xy" in lightsData[light]:
@@ -1125,7 +1125,7 @@ def groupZero(state):
     for light in bridge_config["lights"].keys():
         if "virtual_light" not in bridge_config["alarm_config"] or light != bridge_config["alarm_config"]["virtual_light"]:
             lightsData[light] = state
-    Thread(target=splitLightsToDevices, args=["0", {}, lightsData], daemon=True).start()
+    Thread(target=splitLightsToDevices, args=["0", {}, lightsData]).start()
     for group in bridge_config["groups"].keys():
         bridge_config["groups"][group]["action"].update(state)
         if "on" in state:
@@ -1428,7 +1428,7 @@ class S(BaseHTTPRequestHandler):
                                 bridge_config["sensors"][sensorId]["state"]["presence"] = True
                                 sensors_state[sensorId]["state"]["presence"] = current_time
                             bridge_config["sensors"][sensorId]["state"]["lastupdated"] = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")
-                            Thread(target=motionDetected, args=[sensorId], daemon=True).start()
+                            Thread(target=motionDetected, args=[sensorId]).start()
 
                             if "lightlevel" in get_parameters:
                                 bridge_config["sensors"][lightSensorId]["state"].update({"lightlevel": int(get_parameters["lightlevel"][0]), "dark": bool(get_parameters["dark"][0]), "daylight": bool(get_parameters["daylight"][0]), "lastupdated": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S")})
@@ -1547,7 +1547,7 @@ class S(BaseHTTPRequestHandler):
             if url_pices[2] in bridge_config["config"]["whitelist"]: #check to make sure request is authorized
                 if ((url_pices[3] == "lights" or url_pices[3] == "sensors") and not bool(post_dictionary)):
                     #if was a request to scan for lights of sensors
-                    Thread(target=scan_for_lights, daemon=True).start()
+                    Thread(target=scan_for_lights).start()
                     sleep(7) #give no more than 5 seconds for light scanning (otherwise will face app disconnection timeout)
                     self._set_end_headers(bytes(json.dumps([{"success": {"/" + url_pices[3]: "Searching for new devices"}}],separators=(',', ':'),ensure_ascii=False), "utf8"))
                 elif url_pices[3] == "":
@@ -1722,7 +1722,7 @@ class S(BaseHTTPRequestHandler):
                     if url_pices[3] == "groups" and "lights" in put_dictionary: #need to update scene lightstates
                         for scene in bridge_config["scenes"]: # iterate over scenes
                             for light in put_dictionary["lights"]: # check each scene to make sure it has a lightstate for each new light
-                                if (light not in bridge_config["scenes"][scene]["lightstates"]) and ("lightstates" in bridge_config["scenes"][scene]): # copy first light state to new light
+                                if light not in bridge_config["scenes"][scene]["lightstates"]: # copy first light state to new light
                                     if ("lights" in bridge_config["scenes"][scene] and light in bridge_config["scenes"][scene]["lights"]) or \
                                     (bridge_config["scenes"][scene]["type"] == "GroupScene" and light in bridge_config["groups"][bridge_config["scenes"][scene]["group"]]["lights"]):
                                         # Either light is in the scene or part of the group now, add lightscene based on previous scenes
@@ -1810,7 +1810,7 @@ class S(BaseHTTPRequestHandler):
                 del bridge_config[url_pices[3]][url_pices[4]][url_pices[5]]
             else:
                 if url_pices[3] == "resourcelinks":
-                    Thread(target=resourceRecycle, daemon=True).start()
+                    Thread(target=resourceRecycle).start()
                 elif url_pices[3] == "sensors":
                     ## delete also related sensors
                     for sensor in list(bridge_config["sensors"]):
@@ -1881,54 +1881,35 @@ def run(https, server_class=ThreadingSimpleServer, handler_class=S):
         httpd = server_class(server_address, handler_class)
         logging.info('Starting httpd...')
     httpd.serve_forever()
-    
+    httpd.server_close()
 
-class GracefulKiller:
-  kill_now = False
-  def __init__(self):
-    signal.signal(signal.SIGINT, self.exit_gracefully)
-    signal.signal(signal.SIGTERM, self.exit_gracefully)
-
-  def exit_gracefully(self,signum, frame):
-    self.kill_now = True
-
-def main_program():
+if __name__ == "__main__":
     initialize()
     updateConfig()
-    Thread(target=resourceRecycle, daemon=True).start()
+    Thread(target=resourceRecycle).start()
+    if bridge_config["deconz"]["enabled"]:
+        scanDeconz()
     try:
         if update_lights_on_startup:
-            Thread(target=updateAllLights, daemon=True).start()
-        Thread(target=ssdpSearch, args=[HOST_IP, HOST_HTTP_PORT, mac], daemon=True).start()
-        Thread(target=ssdpBroadcast, args=[HOST_IP, HOST_HTTP_PORT, mac], daemon=True).start()
-        Thread(target=schedulerProcessor, daemon=True).start()
-        Thread(target=syncWithLights, args=[bridge_config["lights"], bridge_config["lights_address"], bridge_config["config"]["whitelist"], bridge_config["groups"], off_if_unreachable], daemon=True).start()
-        Thread(target=entertainmentService, args=[bridge_config["lights"], bridge_config["lights_address"], bridge_config["groups"]], daemon=True).start()
-        Thread(target=run, args=[False], daemon=True).start()
+            Thread(target=updateAllLights).start()
+        Thread(target=ssdpSearch, args=[HOST_IP, HOST_HTTP_PORT, mac]).start()
+        Thread(target=ssdpBroadcast, args=[HOST_IP, HOST_HTTP_PORT, mac]).start()
+        Thread(target=schedulerProcessor).start()
+        Thread(target=syncWithLights, args=[bridge_config["lights"], bridge_config["lights_address"], bridge_config["config"]["whitelist"], bridge_config["groups"], off_if_unreachable]).start()
+        Thread(target=entertainmentService, args=[bridge_config["lights"], bridge_config["lights_address"], bridge_config["groups"]]).start()
+        Thread(target=run, args=[False]).start()
         if not args.no_serve_https:
-            Thread(target=run, args=[True], daemon=True).start()
+            Thread(target=run, args=[True]).start()
         Thread(target=daylightSensor).start()
-        Thread(target=remoteApi, args=[bridge_config["config"]], daemon=True).start()
+        Thread(target=remoteApi, args=[bridge_config["config"]]).start()
         if disableOnlineDiscover == False:
-            Thread(target=remoteDiscover, args=[bridge_config["config"]], daemon=True).start()
+            Thread(target=remoteDiscover, args=[bridge_config["config"]]).start()
 
         while True:
             sleep(10)
     except Exception:
-        logging.exception("server stopped, an error has occurred")
-        sys.exit(0)
+        logging.exception("server stopped ")
     finally:
         run_service = False
         saveConfig()
         logging.info('config saved')
-
-if __name__ == "__main__":
-    killer = GracefulKiller()
-    Thread(target=main_program, daemon=True).start()
-    while not killer.kill_now:
-        sleep(1)
-
-    run_service = False
-    saveConfig()
-    logging.info('config saved')
-    sys.exit("server stopped")
