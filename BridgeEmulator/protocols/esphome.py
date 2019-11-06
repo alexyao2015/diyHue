@@ -32,7 +32,9 @@ def addRequest(request_data, data_type, new_data):
 
 def getLightType(light, address, data):
     request_data = ""
-    if address["esphome_model"] == "ESPHome-RGBW":
+    if address["esphome_model"] == "ESPHome-RGBWW":
+        request_data = request_data + "/light/rgbww_led"
+    elif address["esphome_model"] == "ESPHome-RGBW":
         if "xy" in data: #revised according to hue api docs
             request_data = request_data + "/light/color_led"
         elif "ct" in data:
@@ -73,43 +75,37 @@ def discover(bridge_config, new_lights):
             rgb_boost = device[4]
             if response.status_code == 200 and device[0] == "esphome_diyhue_light":
                 logging.debug("ESPHome: Found " + device_name + " at ip " + ip)
+                rgbww_response = requests.get ("http://" + ip + "/light/rgbww_led", timeout=3)
                 white_response = requests.get ("http://" + ip + "/light/white_led", timeout=3)
                 color_response = requests.get ("http://" + ip + "/light/color_led", timeout=3)
                 dim_response = requests.get ("http://" + ip + "/light/dimmable_led", timeout=3)
                 toggle_response = requests.get ("http://" + ip + "/light/toggle_led", timeout=3)
 
-                if (white_response.status_code != 200 and color_response.status_code != 200 and dim_response != 200 and toggle_response != 200):
+                if (rgbww_response.status_code != 200 and white_response.status_code != 200 and color_response.status_code != 200 and dim_response != 200 and toggle_response != 200):
                     logging.debug("ESPHome: Device has improper configuration! Exiting.")
                     raise
+                elif rgbww_response.status_code == 200:
+                    logging.debug("ESPHome: " + device_name + " is a RGBWW ESPHome device")
+                    esphome_model = "ESPHome-RGBWW"
+                    modelid = "LCT015"
                 elif (white_response.status_code == 200 and color_response.status_code == 200):
                     logging.debug("ESPHome: " + device_name + " is a RGBW ESPHome device")
-                    white_device_data = json.loads(white_response.text)
-                    color_device_data = json.loads(color_response.text)
-                    properties = {"rgb": True, "ct": True, "ip": ip, "name": device_name, "id": mac, "mac": mac, "ct_boost": ct_boost, "rgb_boost": rgb_boost}
                     esphome_model = "ESPHome-RGBW"
                     modelid = "LCT015"
                 elif (white_response.status_code == 200):
                     logging.debug("ESPHome: " + device_name + " is a CT ESPHome device")
-                    white_device_data = json.loads(white_response.text)
-                    properties = {"rgb": False, "ct": True, "ip": ip, "name": device_name, "id": mac, "mac": mac, "ct_boost": ct_boost, "rgb_boost": rgb_boost}
                     esphome_model = "ESPHome-CT"
                     modelid = "LWB010"
                 elif (color_response.status_code == 200):
                     logging.debug("ESPHome: " + device_name + " is a RGB ESPHome device")
-                    color_device_data = json.loads(color_response.text)
-                    properties = {"rgb": True, "ct": False, "ip": ip, "name": device_name, "id": mac, "mac": mac, "ct_boost": ct_boost, "rgb_boost": rgb_boost}
                     esphome_model = "ESPHome-RGB"
                     modelid = "ESPHome-RGB"
                 elif (dim_response.status_code == 200):
                     logging.debug("ESPHome: " + device_name + " is a Dimmable ESPHome device")
-                    dim_device_data = json.loads(dim_response.text)
-                    properties = {"rgb": False, "ct": False, "ip": ip, "name": device_name, "id": mac, "mac": mac, "ct_boost": ct_boost, "rgb_boost": rgb_boost}
                     esphome_model = "ESPHome-Dimmable"
                     modelid = "ESPHome-Dimmable"
                 elif (toggle_response.status_code == 200):
                     logging.debug("ESPHome: " + device_name + " is a Toggle ESPHome device")
-                    toggle_device_data = json.loads(toggle_response.text)
-                    properties = {"rgb": False, "ct": False, "ip": ip, "name": device_name, "id": mac, "mac": mac, "ct_boost": ct_boost, "rgb_boost": rgb_boost}
                     esphome_model = "ESPHome-Toggle"
                     modelid = "ESPHome-Toggle"
 
@@ -117,14 +113,14 @@ def discover(bridge_config, new_lights):
                 for light in bridge_config["lights_address"].keys():
                     if bridge_config["lights_address"][light]["protocol"] == "esphome" and  bridge_config["lights_address"][light]["id"].split('.')[0] == properties["id"].split('.')[0]:
                         device_exist = True
-                        bridge_config["lights_address"][light]["ip"] = properties["ip"]
-                        bridge_config["lights_address"][light]["ct_boost"] = properties["ct_boost"]
-                        bridge_config["lights_address"][light]["rgb_boost"] = properties["rgb_boost"]
-                        logging.debug("ESPHome: light id " + properties["id"] + " already exists, updating device data...")
+                        bridge_config["lights_address"][light]["ip"] = ip
+                        bridge_config["lights_address"][light]["ct_boost"] = ct_boost
+                        bridge_config["lights_address"][light]["rgb_boost"] = rgb_boost
+                        logging.debug("ESPHome: light id " + mac + " already exists, updating device data...")
                         break
                 if (not device_exist):
-                    light_name = "ESPHome id " + properties["id"][-8:] if properties["name"] == "" else properties["name"]
-                    logging.debug("ESPHome: Adding ESPHome " + properties["id"])
+                    light_name = "ESPHome id " + mac[-8:] if device_name == "" else device_name
+                    logging.debug("ESPHome: Adding ESPHome " + mac)
                     new_light_id = nextFreeId(bridge_config, "lights")
                     bridge_config["lights"][new_light_id] = {}
                     bridge_config["lights"][new_light_id]["state"] = light_types[modelid]["state"]
@@ -140,8 +136,8 @@ def discover(bridge_config, new_lights):
                         bridge_config["lights"][new_light_id]["streaming"] = light_types[modelid]["streaming"]
                     #new_lights.update({new_light_id: {"name": light_name}})
                     bridge_config["lights_address"][new_light_id] = {}
-                    bridge_config["lights_address"][new_light_id]["ip"] = properties["ip"]
-                    bridge_config["lights_address"][new_light_id]["id"] = properties["id"]
+                    bridge_config["lights_address"][new_light_id]["ip"] = ip
+                    bridge_config["lights_address"][new_light_id]["id"] = mac
                     bridge_config["lights_address"][new_light_id]["protocol"] = "esphome"
                     bridge_config["lights_address"][new_light_id]["rgb_boost"] = rgb_boost
                     bridge_config["lights_address"][new_light_id]["ct_boost"] = ct_boost
@@ -180,7 +176,7 @@ def set_light(address, light, data):
         if address["esphome_model"] is not "ESPHome-Toggle":
             if "bri" in data:
                 brightness = int(data['bri'])
-                if address["esphome_model"] == "ESPHome-RGBW":
+                if address["esphome_model"] in ["ESPHome-RGBW", "ESPHome-RGBWW"]:
                     if light["state"]["colormode"] == "ct":
                         brightness = ct_boost + brightness
                     elif light["state"]["colormode"] == "xy":
@@ -194,15 +190,15 @@ def set_light(address, light, data):
                 if brightness > 255: # do not send brightness values over 255
                     brightness = 255
                 request_data = addRequest(request_data, "brightness", brightness)
-            if address["esphome_model"] in ["ESPHome-RGBW", "ESPHome-RGB", "ESPHome-CT"]:
-                if ("xy" in data) and (address["esphome_model"] in ["ESPHome-RGBW", "ESPHome-RGB"]):
+            if address["esphome_model"] in ["ESPHome-RGBWW", "ESPHome-RGBW", "ESPHome-RGB", "ESPHome-CT"]:
+                if ("xy" in data) and (address["esphome_model"] in ["ESPHome-RGBWW", "ESPHome-RGBW", "ESPHome-RGB"]):
                     color = convert_xy(data['xy'][0], data['xy'][1], 255)
                     request_data = addRequest(request_data, "r", color[0])
                     request_data = addRequest(request_data, "g", color[1])
                     request_data = addRequest(request_data, "b", color[2])
-                elif "ct" in data and (address["esphome_model"] in ["ESPHome-RGBW", "ESPHome-CT"]):
+                elif "ct" in data and (address["esphome_model"] in ["ESPHome-RGBWW", "ESPHome-RGBW", "ESPHome-CT"]):
                     request_data = addRequest(request_data, "color_temp", data['ct'])
-                elif (("hue" in data) or ("sat" in data)) and (address["esphome_model"] in ["ESPHome-RGBW", "ESPHome-RGB"]):
+                elif (("hue" in data) or ("sat" in data)) and (address["esphome_model"] in ["ESPHome-RGBWW", "ESPHome-RGBW", "ESPHome-RGB"]):
                     if (("hue" in data) and ("sat" in data)):
                         hue = data['hue']
                         sat = data['sat']
@@ -233,7 +229,22 @@ def set_light(address, light, data):
 def get_light_state(address, light):
     logging.debug("ESPHome: <get_light_state> invoked!")
     state = {}
-    if address["esphome_model"] == "ESPHome-RGBW":
+    if address["esphome_model"] == "ESPHome-RGBWW":
+        rgbww_response = requests.get ("http://" + ip + "/light/rgbww_led", timeout=3)
+        rgbww_device = json.loads(rgbww_response.text) #get rgbww device data
+        if rgbww_device['state'] == 'OFF':
+            state['on'] = False
+        elif rgbww_device['state'] == 'ON':
+            state['on'] = True
+            state['bri'] = int(rgbww_device['brightness'])
+            if color ct: #figure out how to check mode
+                state['ct'] = int(rgbww_device['color_temp'])
+                state['colormode'] = "ct"
+            elif color xy: #figureout how to check xy
+                state['xy'] = convert_rgb_xy(int(rgbww_device['color']['r']), int(rgbww_device['color']['g']), int(rgbww_device['color']['b']))
+                state['colormode'] = "xy"
+
+    elif address["esphome_model"] == "ESPHome-RGBW":
         white_response = requests.get ("http://" + address["ip"] + "/light/white_led", timeout=3)
         color_response = requests.get ("http://" + address["ip"] + "/light/color_led", timeout=3)
         white_device = json.loads(white_response.text) #get white device data
