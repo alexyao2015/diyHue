@@ -223,5 +223,5 @@ def cleanQueue():
 
 if __name__ == "__main__":
         print("starting...")
-        Thread(target=cleanQueue).start()
+        Thread(target=cleanQueue, daemon=True).start()
         run(False)
