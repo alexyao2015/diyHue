@@ -22,7 +22,7 @@ RUN cd /tmp && \
 COPY ./BridgeEmulator/web-ui/ /opt/hue-emulator/web-ui/
 COPY ./BridgeEmulator/functions/ /opt/hue-emulator/functions/
 COPY ./BridgeEmulator/protocols/ /opt/hue-emulator/protocols/
-COPY ./BridgeEmulator/HueEmulator3.py ./BridgeEmulator/debug/clip.html /opt/hue-emulator/
+COPY ./BridgeEmulator/HueEmulator3.py ./BridgeEmulator/debug/clip.html ./BridgeEmulator/default-config.json /opt/hue-emulator/
 
 ## x86_64 specific
 COPY ./BridgeEmulator/entertainment-x86_64 /opt/hue-emulator/entertain-srv
